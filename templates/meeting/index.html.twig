@@ -1,0 +1,186 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Séances — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .meeting-card {
+        background: white;
+        border: 1px solid var(--cnps-border);
+        border-left: 5px solid;
+        border-radius: 10px;
+        padding: 18px 20px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .meeting-card.audit_interne { border-left-color: #DC2626; }
+    .meeting-card.reunion_direction { border-left-color: #16A34A; }
+    .meeting-card.comite_technique { border-left-color: var(--cnps-primary); }
+
+    .meeting-type {
+        font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+        text-transform: uppercase; margin-bottom: 6px;
+    }
+    .meeting-type.audit_interne { color: #DC2626; }
+    .meeting-type.reunion_direction { color: #16A34A; }
+    .meeting-type.comite_technique { color: var(--cnps-primary); }
+
+    .meeting-badge {
+        position: absolute; top: 18px; right: 18px;
+        font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 12px;
+    }
+    .badge-draft { background: #F1F5F9; color: var(--cnps-text-muted); }
+    .badge-scheduled { background: #DCFCE7; color: #15803D; }
+    .badge-done { background: #DBEAFE; color: #1E40AF; }
+
+    .meeting-title {
+        font-size: 15px; font-weight: 700; color: var(--cnps-text);
+        margin: 4px 0 12px; line-height: 1.3; padding-right: 80px;
+    }
+    .meeting-info {
+        display: flex; flex-direction: column; gap: 6px;
+        margin-bottom: 14px; font-size: 13px; color: var(--cnps-text-muted);
+    }
+    .meeting-info i { margin-right: 6px; color: var(--cnps-primary-light); }
+
+    .meeting-footer {
+        display: flex; justify-content: flex-end; gap: 6px;
+        margin-top: auto; padding-top: 12px; border-top: 1px solid #F1F5F9;
+    }
+    .btn-icon {
+        width: 32px; height: 32px; border-radius: 7px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--cnps-border); background: white;
+        color: var(--cnps-text-muted); text-decoration: none; font-size: 14px;
+    }
+    .btn-icon:hover { background: #F1F5F9; color: var(--cnps-primary); }
+
+    .empty-meeting-card {
+        background: white; border: 2px dashed var(--cnps-border); border-radius: 10px;
+        padding: 30px 20px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; text-align: center;
+        text-decoration: none; transition: all 0.15s; height: 100%; min-height: 180px;
+    }
+    .empty-meeting-card:hover { border-color: var(--cnps-primary); background: #F8FAFC; }
+    .empty-meeting-card-icon {
+        width: 52px; height: 52px; border-radius: 50%;
+        background: var(--cnps-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; margin-bottom: 12px;
+    }
+    .empty-meeting-card-title { font-weight: 700; font-size: 15px; color: var(--cnps-text); }
+    .empty-meeting-card-text { font-size: 12px; color: var(--cnps-text-muted); }
+
+    .activity-card {
+        background: white; border: 1px solid var(--cnps-border);
+        border-radius: 10px; padding: 18px 20px; height: 100%;
+    }
+    .activity-card-label {
+        font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+        color: var(--cnps-text-muted); margin-bottom: 8px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .activity-number { font-size: 56px; font-weight: 800; color: var(--cnps-primary); line-height: 1; margin: 8px 0; }
+
+    .audit-card {
+        background: linear-gradient(135deg, #1F4E79 0%, #163958 100%);
+        border-radius: 10px; padding: 20px; color: white; height: 100%;
+        position: relative; overflow: hidden;
+    }
+    .audit-card-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .audit-card-desc { font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5; margin-bottom: 14px; }
+    .audit-card-countdown-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.7); }
+    .audit-card-countdown { font-size: 24px; font-weight: 800; letter-spacing: 1px; margin: 4px 0 14px; }
+    .audit-card-btn {
+        background: white; color: var(--cnps-primary); border: none;
+        padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px;
+        text-decoration: none; display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-title">Gestion des Séances</h1>
+            <p class="page-subtitle mb-0">Planification et suivi des audits et réunions administratives.</p>
+        </div>
+        <a href="{{ path('app_meeting_new') }}" class="btn btn-cnps">
+            <i class="bi bi-plus-lg me-1"></i> Créer une séance
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        {% for meeting in meetings %}
+            <div class="col-md-6">
+                <div class="meeting-card {{ meeting.type }}">
+                    <span class="meeting-badge badge-{{ meeting.status }}">{{ meeting.statusLabel }}</span>
+
+                    <div class="meeting-type {{ meeting.type }}">{{ meeting.typeLabel }}</div>
+                    <h5 class="meeting-title">{{ meeting.title }}</h5>
+
+                    <div class="meeting-info">
+                        <span>
+                            <i class="bi bi-calendar3"></i>
+                            {% if meeting.scheduledAt %}
+                                {{ meeting.scheduledAt|date('d/m/Y à H:i') }}
+                            {% else %}
+                                Date à confirmer
+                            {% endif %}
+                        </span>
+                        <span>
+                            <i class="bi bi-geo-alt"></i>
+                            {{ meeting.location ?: 'Lieu à définir' }}
+                        </span>
+                        <span>
+                            <i class="bi bi-hash"></i>
+                            {{ meeting.reference }}
+                        </span>
+                    </div>
+
+                    <div class="meeting-footer">
+                        <a href="{{ path('app_meeting_edit', {id: meeting.id}) }}" class="btn-icon" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        {# Carte "Nouvelle séance" toujours présente à la fin #}
+        <div class="col-md-6">
+            <a href="{{ path('app_meeting_new') }}" class="empty-meeting-card">
+                <div class="empty-meeting-card-icon"><i class="bi bi-plus"></i></div>
+                <div class="empty-meeting-card-title">Nouvelle séance</div>
+                <div class="empty-meeting-card-text">Cliquez pour planifier un audit ou une réunion</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="activity-card">
+                <div class="activity-card-label">
+                    <i class="bi bi-graph-up-arrow"></i> ACTIVITÉ
+                </div>
+                <div class="activity-number">{{ stats.monthly_total }}</div>
+                <div class="text-muted-cnps small">Séances enregistrées</div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="audit-card">
+                <h4 class="audit-card-title">{{ stats.next_audit.title }}</h4>
+                <p class="audit-card-desc">{{ stats.next_audit.description }}</p>
+                <div class="d-flex justify-content-between align-items-end">
+                    <div>
+                        <div class="audit-card-countdown-label">COMPTE À REBOURS</div>
+                        <div class="audit-card-countdown">{{ stats.next_audit.countdown }}</div>
+                    </div>
+                    <a href="#" class="audit-card-btn">Voir le dossier <i class="bi bi-arrow-up-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

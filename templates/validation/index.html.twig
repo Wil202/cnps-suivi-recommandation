@@ -1,0 +1,622 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Validation des recommandations — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* ============================================================
+       SWITCH DE RÔLE (haut de page, démo)
+       ============================================================ */
+    .role-switch {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        color: white;
+    }
+    .role-switch-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.6);
+    }
+    .role-switch-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .role-btn {
+        padding: 8px 14px;
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.85);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s;
+    }
+    .role-btn:hover {
+        background: rgba(255,255,255,0.15);
+        color: white;
+    }
+    .role-btn.active {
+        background: white;
+        color: #1E293B;
+        font-weight: 700;
+    }
+    .role-switch-info {
+        margin-left: auto;
+        font-size: 12px;
+        color: rgba(255,255,255,0.6);
+    }
+
+    /* ============================================================
+       LAYOUT SPLIT (vue boîte mail)
+       ============================================================ */
+    .validation-split {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 16px;
+        min-height: 700px;
+    }
+
+    /* ============================================================
+       PANNEAU GAUCHE — File d'attente
+       ============================================================ */
+    .queue-panel {
+        background: white;
+        border: 1px solid var(--cnps-border);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-height: 800px;
+    }
+
+    .queue-header {
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--cnps-border);
+        background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+    }
+    .queue-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--cnps-text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .queue-count {
+        background: var(--cnps-primary);
+        color: white;
+        padding: 2px 9px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .queue-subtitle {
+        font-size: 11px;
+        color: var(--cnps-text-muted);
+        margin: 4px 0 0;
+    }
+
+    .queue-search {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--cnps-border);
+    }
+    .queue-search input {
+        width: 100%;
+        padding: 8px 12px 8px 32px;
+        border: 1px solid var(--cnps-border);
+        border-radius: 8px;
+        font-size: 13px;
+        background: #F8FAFC;
+    }
+    .queue-search {
+        position: relative;
+    }
+    .queue-search i {
+        position: absolute;
+        left: 30px;
+        top: 21px;
+        color: #94A3B8;
+        font-size: 14px;
+    }
+
+    .queue-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .queue-item {
+        padding: 14px 18px;
+        border-bottom: 1px solid #F1F5F9;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: all 0.15s;
+        position: relative;
+    }
+    .queue-item:hover {
+        background: #F8FAFC;
+        color: inherit;
+    }
+    .queue-item.active {
+        background: linear-gradient(90deg, rgba(31, 78, 121, 0.08) 0%, rgba(31, 78, 121, 0.02) 100%);
+        border-left: 3px solid var(--cnps-primary);
+        padding-left: 15px;
+    }
+    .queue-item.urgent::before {
+        content: '';
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #DC2626;
+    }
+
+    .queue-item-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+    .queue-item-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--cnps-primary), var(--cnps-primary-light));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+    .queue-item-agent {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--cnps-text);
+    }
+    .queue-item-date {
+        font-size: 11px;
+        color: var(--cnps-text-muted);
+    }
+    .queue-item-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--cnps-text);
+        margin-bottom: 4px;
+        line-height: 1.35;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    .queue-item-code {
+        font-family: 'Courier New', monospace;
+        font-size: 10px;
+        color: var(--cnps-text-muted);
+        margin-bottom: 6px;
+    }
+    .queue-item-meta {
+        display: flex;
+        gap: 12px;
+        font-size: 11px;
+        color: var(--cnps-text-muted);
+    }
+    .queue-item-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* ============================================================
+       PANNEAU DROIT — Détail et décision
+       ============================================================ */
+    .detail-panel {
+        background: white;
+        border: 1px solid var(--cnps-border);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .detail-empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+        color: var(--cnps-text-muted);
+    }
+    .detail-empty i {
+        font-size: 64px;
+        color: #CBD5E1;
+        margin-bottom: 12px;
+    }
+
+    .detail-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--cnps-border);
+    }
+    .detail-code {
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        background: #F1F5F9;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: var(--cnps-text);
+        font-weight: 600;
+        display: inline-block;
+    }
+    .detail-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #DBEAFE;
+        color: #1E40AF;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .detail-title {
+        font-size: 19px;
+        font-weight: 700;
+        color: var(--cnps-text);
+        margin: 10px 0 4px;
+    }
+    .detail-agent-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid #F1F5F9;
+        font-size: 13px;
+    }
+    .detail-agent-info .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--cnps-primary), var(--cnps-primary-light));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .detail-body {
+        padding: 22px 24px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .detail-section {
+        margin-bottom: 22px;
+    }
+    .detail-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--cnps-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .detail-section-body {
+        font-size: 14px;
+        color: var(--cnps-text);
+        line-height: 1.6;
+    }
+
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    .summary-stat {
+        background: #F8FAFC;
+        border: 1px solid var(--cnps-border);
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+    }
+    .summary-stat-value {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--cnps-primary);
+        line-height: 1;
+    }
+    .summary-stat-label {
+        font-size: 10px;
+        color: var(--cnps-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+        font-weight: 600;
+    }
+
+    /* ============================================================
+       ZONE DE DÉCISION (bas du panneau droit)
+       ============================================================ */
+    .decision-zone {
+        border-top: 2px solid var(--cnps-border);
+        background: linear-gradient(180deg, #F8FAFC 0%, white 100%);
+        padding: 20px 24px;
+    }
+
+    .decision-comment {
+        width: 100%;
+        border: 1px solid var(--cnps-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        resize: vertical;
+        min-height: 70px;
+        margin-bottom: 14px;
+        background: white;
+    }
+    .decision-comment:focus {
+        outline: none;
+        border-color: var(--cnps-primary);
+        box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.1);
+    }
+
+    .decision-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .decision-actions .btn {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 9px 16px;
+    }
+
+    .quick-link-detail {
+        text-align: center;
+        font-size: 12px;
+        margin-top: 12px;
+        color: var(--cnps-text-muted);
+    }
+    .quick-link-detail a {
+        color: var(--cnps-primary);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    /* ============================================================
+       Responsive
+       ============================================================ */
+    @media (max-width: 992px) {
+        .validation-split {
+            grid-template-columns: 1fr;
+        }
+        .queue-panel {
+            max-height: 400px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    {# ============ EN-TÊTE ============ #}
+    <div class="mb-3">
+        <h1 class="page-title">Validation des recommandations</h1>
+        <p class="page-subtitle mb-0">Examinez et décidez du sort des recommandations qui vous sont soumises.</p>
+    </div>
+
+    {# ============ SWITCH DE RÔLE (DÉMO) ============ #}
+    <div class="role-switch">
+        <span class="role-switch-label">
+            <i class="bi bi-shield-check"></i> Démo — Rôle actif
+        </span>
+        <div class="role-switch-buttons">
+            <a href="{{ path('app_validation_index', {role: 'chief_service'}) }}"
+               class="role-btn {{ currentRole == 'chief_service' ? 'active' : '' }}">
+                <i class="bi bi-person-badge"></i> Chef de service
+            </a>
+            <a href="{{ path('app_validation_index', {role: 'chief_structure'}) }}"
+               class="role-btn {{ currentRole == 'chief_structure' ? 'active' : '' }}">
+                <i class="bi bi-buildings"></i> Chef de structure
+            </a>
+            <a href="{{ path('app_validation_index', {role: 'followup'}) }}"
+               class="role-btn {{ currentRole == 'followup' ? 'active' : '' }}">
+                <i class="bi bi-eye-fill"></i> Structure de suivi
+            </a>
+        </div>
+        <span class="role-switch-info">
+            <i class="bi bi-info-circle"></i> Cliquez pour changer la vue selon le rôle utilisateur
+        </span>
+    </div>
+
+    {# ============ LAYOUT SPLIT ============ #}
+    <div class="validation-split">
+
+        {# =================== PANNEAU GAUCHE : FILE =================== #}
+        <div class="queue-panel">
+            <div class="queue-header">
+                <h6 class="queue-title">
+                    <i class="{{ roleData.role_icon }}"></i>
+                    File d'attente
+                    <span class="queue-count">{{ roleData.queue|length }}</span>
+                </h6>
+                <p class="queue-subtitle">{{ roleData.queue_subtitle }}</p>
+            </div>
+
+            <div class="queue-search">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Rechercher...">
+            </div>
+
+            <div class="queue-list">
+                {% for reco in roleData.queue %}
+                    <a href="{{ path('app_validation_index', {role: currentRole, reco: reco.id}) }}"
+                       class="queue-item
+                              {{ selectedReco and selectedReco.id == reco.id ? 'active' : '' }}
+                              {{ reco.urgency == 'high' ? 'urgent' : '' }}">
+
+                        <div class="queue-item-header">
+                            <div class="queue-item-avatar">{{ reco.agent_initials }}</div>
+                            <div class="flex-grow-1">
+                                <div class="queue-item-agent">{{ reco.agent }}</div>
+                                <div class="queue-item-date">{{ reco.submitted_relative }}</div>
+                            </div>
+                        </div>
+
+                        <div class="queue-item-title">{{ reco.title }}</div>
+                        <div class="queue-item-code">{{ reco.code }}</div>
+
+                        <div class="queue-item-meta">
+                            <span><i class="bi bi-card-checklist"></i> {{ reco.actions_count }} actions</span>
+                            <span><i class="bi bi-paperclip"></i> {{ reco.attachments_count }} PJ</span>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# =================== PANNEAU DROIT : DÉTAIL =================== #}
+        <div class="detail-panel">
+            {% if selectedReco %}
+                {# En-tête #}
+                <div class="detail-header">
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <span class="detail-status-pill">
+                            <i class="bi bi-hourglass-split"></i> {{ roleData.expected_status }}
+                        </span>
+                        <span class="detail-code">{{ selectedReco.code }}</span>
+                    </div>
+                    <h2 class="detail-title">{{ selectedReco.title }}</h2>
+
+                    <div class="detail-agent-info">
+                        <div class="avatar">{{ selectedReco.agent_initials }}</div>
+                        <div>
+                            <strong>{{ selectedReco.agent }}</strong>
+                            <span class="text-muted-cnps"> · Soumise le {{ selectedReco.submitted_date }}</span>
+                            {% if selectedReco.cs_validator is defined %}
+                                <br>
+                                <small class="text-muted-cnps">
+                                    Validée par {{ selectedReco.cs_validator }} (Chef de service)
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Corps #}
+                <div class="detail-body">
+                    {# Statistiques rapides #}
+                    <div class="detail-section">
+                        <div class="detail-section-title">
+                            <i class="bi bi-bar-chart-fill"></i> Synthèse du dossier
+                        </div>
+                        <div class="summary-stats">
+                            <div class="summary-stat">
+                                <div class="summary-stat-value">{{ selectedReco.actions_count }}</div>
+                                <div class="summary-stat-label">Actions</div>
+                            </div>
+                            <div class="summary-stat">
+                                <div class="summary-stat-value">{{ selectedReco.attachments_count }}</div>
+                                <div class="summary-stat-label">Pièces jointes</div>
+                            </div>
+                            <div class="summary-stat">
+                                <div class="summary-stat-value" style="color: #16A34A;">100%</div>
+                                <div class="summary-stat-label">Complétude</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Aperçu du contenu #}
+                    <div class="detail-section">
+                        <div class="detail-section-title">
+                            <i class="bi bi-file-text"></i> Résumé des actions menées
+                        </div>
+                        <div class="detail-section-body">
+                            {{ selectedReco.preview }}
+                        </div>
+                    </div>
+
+                    {# Vérifications recommandées (selon le rôle) #}
+                    <div class="detail-section">
+                        <div class="detail-section-title">
+                            <i class="bi bi-list-check"></i> Points à vérifier avant décision
+                        </div>
+                        <ul style="padding-left: 20px; font-size: 13px; color: var(--cnps-text); line-height: 1.8;">
+                            <li>Toutes les actions saisies sont cohérentes avec l'objectif initial</li>
+                            <li>Les pièces justificatives sont conformes et exploitables</li>
+                            <li>Les délais et engagements sont documentés</li>
+                            {% if currentRole == 'chief_structure' %}
+                                <li>Le Chef de service a bien validé techniquement</li>
+                            {% endif %}
+                            {% if currentRole == 'followup' %}
+                                <li>La mise en œuvre est effective sur le terrain</li>
+                                <li>Aucune action complémentaire n'est requise</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+
+                {# Zone de décision #}
+                <div class="decision-zone">
+                    <label class="form-label text-cnps-primary fw-semibold" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="bi bi-chat-square-text"></i> Commentaire de décision
+                        <span class="text-muted-cnps" style="font-weight: 400; text-transform: none;">
+                            (obligatoire en cas de renvoi ou rejet)
+                        </span>
+                    </label>
+                    <textarea class="decision-comment" placeholder="Saisissez ici votre commentaire à destination de l'agent ou de la hiérarchie..."></textarea>
+
+                    <div class="decision-actions">
+                        {% for action in roleData.actions %}
+                            <button class="btn btn-{{ action.color }}">
+                                <i class="bi {{ action.icon }}"></i> {{ action.label }}
+                                {% if action.next_status is defined %}
+                                    <span style="font-size: 10px; opacity: 0.7; margin-left: 4px;">→ {{ action.next_status }}</span>
+                                {% endif %}
+                            </button>
+                        {% endfor %}
+                    </div>
+
+                    <p class="quick-link-detail">
+                        <a href="{{ path('app_recommendation_show', {reference: selectedReco.code}) }}">
+                            <i class="bi bi-arrows-fullscreen"></i> Voir le dossier complet
+                        </a>
+                    </p>
+                </div>
+            {% else %}
+                {# Cas où aucune reco n'est sélectionnée #}
+                <div class="detail-empty">
+                    <i class="bi bi-inbox"></i>
+                    <h5 class="text-muted-cnps">Aucune recommandation à traiter</h5>
+                    <p class="small">Sélectionnez une recommandation dans la liste de gauche.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

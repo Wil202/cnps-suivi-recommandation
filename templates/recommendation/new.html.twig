@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+{% block title %}Nouvelle recommandation — CNPS{% endblock %}
+{% block body %}
+    <div class="mb-3">
+        <a href="{{ path('app_recommendation_index') }}" class="text-decoration-none text-muted-cnps small">
+            <i class="bi bi-arrow-left"></i> Retour aux recommandations
+        </a>
+    </div>
+    <h1 class="page-title mb-4">Nouvelle recommandation</h1>
+    <div class="cnps-card" style="max-width: 720px;">
+        {{ include('recommendation/_form.html.twig', {button_label: 'Créer la recommandation'}) }}
+    </div>
+{% endblock %}

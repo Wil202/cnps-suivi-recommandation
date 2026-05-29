@@ -1,0 +1,474 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Saisie d'une action — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* ===== Bandeau de contexte (recommandation) ===== */
+    .reco-context-card {
+        background: white;
+        border: 1px solid var(--cnps-border);
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+    }
+    .priority-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #1F2937;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    .priority-badge .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #DC2626;
+    }
+    .ref-tag {
+        color: var(--cnps-text-muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+    .reco-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--cnps-text);
+        margin: 10px 0 6px;
+    }
+    .reco-description {
+        font-size: 13px;
+        color: var(--cnps-text-muted);
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+    .reco-meta-right {
+        text-align: right;
+    }
+    .meta-label {
+        font-size: 11px;
+        color: var(--cnps-text-muted);
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+    .meta-value {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--cnps-text);
+    }
+    .meta-value.deadline { color: #DC2626; }
+
+    /* ===== Bloc formulaire principal ===== */
+    .form-block {
+        background: white;
+        border: 1px solid var(--cnps-border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .form-block-header {
+        background: var(--cnps-primary);
+        color: white;
+        padding: 14px 22px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 15px;
+    }
+    .form-block-body {
+        padding: 24px;
+    }
+
+    .form-field-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--cnps-text);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-input, .form-textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--cnps-border);
+        border-radius: 8px;
+        font-size: 13px;
+        background: white;
+        transition: all 0.15s;
+    }
+    .form-input:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--cnps-primary-light);
+        box-shadow: 0 0 0 3px rgba(46,117,182,0.12);
+    }
+    .form-textarea { resize: vertical; min-height: 90px; }
+
+    /* ===== Slider d'avancement ===== */
+    .progress-slider-wrapper {
+        position: relative;
+    }
+    .progress-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: linear-gradient(to right, var(--cnps-primary) 65%, #E5E7EB 65%);
+        outline: none;
+    }
+    .progress-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--cnps-primary);
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .progress-slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--cnps-primary);
+        cursor: pointer;
+        border: 3px solid white;
+    }
+    .progress-value {
+        font-weight: 700;
+        color: var(--cnps-primary);
+        font-size: 14px;
+    }
+
+    /* ===== Upload zone ===== */
+    .upload-zone {
+        border: 2px dashed var(--cnps-border);
+        border-radius: 10px;
+        padding: 32px 24px;
+        text-align: center;
+        background: #F8FAFC;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .upload-zone:hover {
+        border-color: var(--cnps-primary);
+        background: white;
+    }
+    .upload-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 12px;
+        border-radius: 10px;
+        background: var(--cnps-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cnps-primary);
+        font-size: 22px;
+        border: 1px solid var(--cnps-border);
+    }
+    .upload-text {
+        font-size: 13px;
+        color: var(--cnps-text);
+        font-weight: 500;
+    }
+    .upload-text strong { color: var(--cnps-primary); cursor: pointer; }
+    .upload-hint {
+        font-size: 11px;
+        color: var(--cnps-text-muted);
+        margin-top: 4px;
+    }
+
+    /* ===== Boutons du formulaire ===== */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .btn-draft {
+        background: white;
+        color: var(--cnps-text);
+        border: 1px solid var(--cnps-border);
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .btn-submit {
+        background: var(--cnps-primary);
+        color: white;
+        border: none;
+        padding: 9px 22px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-submit:hover { background: var(--cnps-primary-dark); }
+
+    /* ===== Sidebar historique ===== */
+    .history-card {
+        background: white;
+        border: 1px solid var(--cnps-border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .history-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--cnps-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .history-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--cnps-text);
+        margin: 0;
+    }
+    .history-count {
+        font-size: 11px;
+        background: #DCFCE7;
+        color: #15803D;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 700;
+    }
+    .history-body {
+        padding: 20px;
+        position: relative;
+    }
+    .history-item {
+        position: relative;
+        padding-left: 24px;
+        padding-bottom: 18px;
+    }
+    .history-item:last-child { padding-bottom: 0; }
+    .history-item::before {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--cnps-primary);
+        z-index: 2;
+    }
+    .history-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: 9px;
+        top: 16px;
+        bottom: 0;
+        width: 2px;
+        background: var(--cnps-border);
+        z-index: 1;
+    }
+    .history-date {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--cnps-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .history-item-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--cnps-text);
+        margin: 4px 0;
+    }
+    .history-item-desc {
+        font-size: 12px;
+        color: var(--cnps-text-muted);
+        line-height: 1.5;
+        margin-bottom: 4px;
+    }
+    .history-attachment {
+        font-size: 11px;
+        color: var(--cnps-primary);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+        background: var(--cnps-bg);
+        padding: 3px 8px;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+
+    /* ===== Card "Besoin d'aide" ===== */
+    .help-card {
+        background: linear-gradient(135deg, #1F4E79 0%, #163958 100%);
+        border-radius: 12px;
+        padding: 20px;
+        color: white;
+        margin-top: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    .help-card-illustration {
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        height: 80px;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    .help-card-illustration::before {
+        content: '';
+        position: absolute;
+        inset: 12px 12px 0 12px;
+        background: white;
+        border-radius: 6px 6px 0 0;
+    }
+    .help-card-illustration::after {
+        content: '';
+        position: absolute;
+        bottom: 8px;
+        right: 12px;
+        width: 24px;
+        height: 24px;
+        background: var(--cnps-teal);
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.3);
+    }
+    .help-card-title {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    .help-card-desc {
+        font-size: 12px;
+        color: rgba(255,255,255,0.8);
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    {# ============ CONTEXTE RECOMMANDATION ============ #}
+    <div class="reco-context-card">
+        <div class="row align-items-start">
+            <div class="col-md-9">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="priority-badge">
+                        <span class="dot"></span>
+                        PRIORITÉ {{ reco.priority }}
+                    </span>
+                    <span class="ref-tag">REF: {{ reco.code }}</span>
+                </div>
+                <h2 class="reco-title">{{ reco.title }}</h2>
+                <p class="reco-description">{{ reco.description }}</p>
+            </div>
+            <div class="col-md-3 reco-meta-right">
+                <div class="meta-label">Échéance</div>
+                <div class="meta-value deadline">{{ reco.deadline }}</div>
+                <div class="meta-label mt-3">Responsable</div>
+                <div class="meta-value" style="font-size: 13px;">{{ reco.responsible }}</div>
+            </div>
+        </div>
+    </div>
+
+    {# ============ FORMULAIRE + HISTORIQUE ============ #}
+    <div class="row g-3">
+        {# ===== Colonne formulaire ===== #}
+        <div class="col-lg-8">
+            <div class="form-block">
+                <div class="form-block-header">
+                    <i class="bi bi-pencil-square"></i> Saisie d'une nouvelle action
+                </div>
+                <div class="form-block-body">
+                    <div class="mb-3">
+                        <label class="form-field-label">Titre de l'action réalisée</label>
+                        <input type="text" class="form-input" placeholder="Ex: Déploiement du serveur de stockage secondaire">
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-5">
+                            <label class="form-field-label">Date de réalisation</label>
+                            <input type="date" class="form-input">
+                        </div>
+                        <div class="col-md-7">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-field-label mb-0">Avancement global</label>
+                                <span class="progress-value" id="progressValue">65%</span>
+                            </div>
+                            <div class="progress-slider-wrapper mt-3">
+                                <input type="range" min="0" max="100" value="65" class="progress-slider" id="progressSlider"
+                                       oninput="document.getElementById('progressValue').textContent = this.value + '%'; this.style.background = 'linear-gradient(to right, var(--cnps-primary) ' + this.value + '%, #E5E7EB ' + this.value + '%)'">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-field-label">Description détaillée de l'intervention</label>
+                        <textarea class="form-textarea" rows="4" placeholder="Décrivez les étapes techniques réalisées, les obstacles rencontrés et les résultats obtenus..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-field-label">Pièces justificatives (Preuves de réalisation)</label>
+                        <div class="upload-zone">
+                            <div class="upload-icon">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                            </div>
+                            <div class="upload-text">
+                                <strong>Cliquez pour téléverser</strong> ou glissez-déposez vos fichiers ici
+                            </div>
+                            <div class="upload-hint">PDF, PNG, JPG jusqu'à 10MB</div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-draft">Enregistrer brouillon</button>
+                        <button class="btn-submit">
+                            <i class="bi bi-send"></i> Soumettre
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ===== Colonne historique ===== #}
+        <div class="col-lg-4">
+            <div class="history-card">
+                <div class="history-header">
+                    <h6 class="history-title">Historique des actions</h6>
+                    <span class="history-count">{{ history|length }} entrées</span>
+                </div>
+                <div class="history-body">
+                    {% for item in history %}
+                        <div class="history-item">
+                            <div class="history-date">{{ item.date }}</div>
+                            <div class="history-item-title">{{ item.title }}</div>
+                            <p class="history-item-desc">{{ item.description }}</p>
+                            {% if item.attachment %}
+                                <a href="#" class="history-attachment">
+                                    <i class="bi bi-paperclip"></i> {{ item.attachment }}
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Card "Besoin d'aide" #}
+            <div class="help-card">
+                <div class="help-card-illustration"></div>
+                <div class="help-card-title">BESOIN D'AIDE ?</div>
+                <p class="help-card-desc">Consultez le guide de saisie pour garantir la validation de vos actions.</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modifier la séance — CNPS{% endblock %}
+{% block body %}
+    <div class="mb-3">
+        <a href="{{ path('app_meeting_index') }}" class="text-decoration-none text-muted-cnps small">
+            <i class="bi bi-arrow-left"></i> Retour aux séances
+        </a>
+    </div>
+    <h1 class="page-title mb-4">Modifier la séance</h1>
+    <div class="cnps-card mb-3" style="max-width: 680px;">
+        {{ include('meeting/_form.html.twig', {button_label: 'Enregistrer les modifications'}) }}
+    </div>
+    <div class="cnps-card" style="max-width: 680px; border-color: #FCA5A5;">
+        <h6 class="fw-bold text-danger mb-1">Zone de danger</h6>
+        <p class="text-muted-cnps small mb-3">La suppression d'une séance est définitive.</p>
+        <form method="post" action="{{ path('app_meeting_delete', {id: meeting.id}) }}"
+              onsubmit="return confirm('Supprimer cette séance ?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ meeting.id) }}">
+            <button class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> Supprimer la séance
+            </button>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle structure — CNPS{% endblock %}
+
+{% block body %}
+    <div class="mb-3">
+        <a href="{{ path('app_structure_index') }}" class="text-decoration-none text-muted-cnps small">
+            <i class="bi bi-arrow-left"></i> Retour aux structures
+        </a>
+    </div>
+
+    <h1 class="page-title mb-4">Nouvelle structure</h1>
+
+    <div class="cnps-card" style="max-width: 640px;">
+        {{ include('structure/_form.html.twig', {button_label: 'Créer la structure'}) }}
+    </div>
+{% endblock %}

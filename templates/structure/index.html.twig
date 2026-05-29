@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Structures — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .cnps-table { width: 100%; border-collapse: collapse; }
+    .cnps-table thead th {
+        background: #F1F5F9; text-align: left; padding: 10px 14px;
+        font-size: 11px; font-weight: 600; color: var(--cnps-text-muted);
+        text-transform: uppercase; letter-spacing: 0.4px;
+        border-bottom: 1px solid var(--cnps-border);
+    }
+    .cnps-table tbody td {
+        padding: 13px 14px; font-size: 13px;
+        border-bottom: 1px solid var(--cnps-border); vertical-align: middle;
+    }
+    .cnps-table tbody tr:hover { background: #FAFBFD; }
+
+    .code-mono {
+        font-family: 'Courier New', monospace; font-size: 12px;
+        background: #F1F5F9; padding: 3px 8px; border-radius: 5px;
+        color: var(--cnps-primary); font-weight: 600;
+    }
+    .type-badge {
+        font-size: 11px; font-weight: 600; padding: 3px 10px;
+        border-radius: 12px; background: #E0E7FF; color: #3730A3;
+    }
+    .status-dot {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 12px; font-weight: 500;
+    }
+    .status-dot .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-active .dot { background: #16A34A; }
+    .status-inactive .dot { background: #94A3B8; }
+    .status-active { color: #15803D; }
+    .status-inactive { color: var(--cnps-text-muted); }
+
+    .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+    .btn-icon {
+        width: 32px; height: 32px; border-radius: 7px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--cnps-border); background: white;
+        color: var(--cnps-text-muted); text-decoration: none; font-size: 14px;
+        transition: all 0.15s;
+    }
+    .btn-icon:hover { background: #F1F5F9; color: var(--cnps-primary); }
+    .btn-icon.danger:hover { background: #FEE2E2; color: #DC2626; border-color: #FCA5A5; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--cnps-text-muted); }
+    .empty-state i { font-size: 56px; color: #CBD5E1; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-title">Structures</h1>
+            <p class="page-subtitle mb-0">
+                Référentiel des directions, sous-directions et cellules de la CNPS.
+            </p>
+        </div>
+        <a href="{{ path('app_structure_new') }}" class="btn btn-cnps">
+            <i class="bi bi-plus-lg"></i> Nouvelle structure
+        </a>
+    </div>
+
+    <div class="cnps-card p-0">
+        <table class="cnps-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Libellé</th>
+                    <th>Type</th>
+                    <th>Email du chef</th>
+                    <th>Statut</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for structure in structures %}
+                    <tr>
+                        <td><span class="code-mono">{{ structure.code }}</span></td>
+                        <td class="fw-semibold">{{ structure.label }}</td>
+                        <td><span class="type-badge">{{ structure.typeLabel }}</span></td>
+                        <td>
+                            {% if structure.chiefEmail %}
+                                {{ structure.chiefEmail }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if structure.active %}
+                                <span class="status-dot status-active"><span class="dot"></span> Active</span>
+                            {% else %}
+                                <span class="status-dot status-inactive"><span class="dot"></span> Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="row-actions">
+                                <a href="{{ path('app_structure_show', {id: structure.id}) }}" class="btn-icon" title="Voir">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('app_structure_edit', {id: structure.id}) }}" class="btn-icon" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div><i class="bi bi-buildings"></i></div>
+                                <h5>Aucune structure enregistrée</h5>
+                                <p>Commencez par créer la première structure de la CNPS.</p>
+                                <a href="{{ path('app_structure_new') }}" class="btn btn-cnps mt-2">
+                                    <i class="bi bi-plus-lg"></i> Créer une structure
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

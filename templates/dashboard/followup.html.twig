@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon tableau de bord — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .role-banner { background: linear-gradient(135deg, #1F4E79, #163958); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 22px; }
+    .role-banner h2 { font-size: 18px; font-weight: 700; margin: 0; }
+    .role-banner p { font-size: 13px; opacity: 0.85; margin: 4px 0 0; }
+    .mini-kpi { display: flex; gap: 16px; margin-bottom: 22px; }
+    .mini-kpi-card { flex: 1; background: white; border: 1px solid var(--cnps-border); border-radius: 10px; padding: 16px 18px; }
+    .mini-kpi-value { font-size: 26px; font-weight: 800; color: var(--cnps-primary); }
+    .mini-kpi-label { font-size: 11px; color: var(--cnps-text-muted); text-transform: uppercase; }
+    .reco-line { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #F1F5F9; }
+    .reco-line:last-child { border-bottom: none; }
+    .badge-st { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 12px; background: #DCFCE7; color: #15803D; }
+    .badge-closed { background: #D1FAE5; color: var(--cnps-primary); }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="role-banner">
+        <h2><i class="bi bi-clipboard-check"></i> Structure de suivi</h2>
+        <p>{{ user.fullName }}</p>
+    </div>
+
+    <div class="mini-kpi">
+        <div class="mini-kpi-card">
+            <div class="mini-kpi-value">{{ to_close|length }}</div>
+            <div class="mini-kpi-label">À contrôler / clôturer</div>
+        </div>
+        <div class="mini-kpi-card">
+            <div class="mini-kpi-value">{{ closed|length }}</div>
+            <div class="mini-kpi-label">Clôturées</div>
+        </div>
+    </div>
+
+    <div class="cnps-card mb-3">
+        <h6 class="fw-bold mb-3">À contrôler (approuvées, en attente de clôture)</h6>
+        {% for reco in to_close %}
+            <div class="reco-line">
+                <div>
+                    <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="fw-semibold text-decoration-none">{{ reco.label }}</a>
+                    <div class="text-muted-cnps" style="font-size: 11px;">{{ reco.reference }}</div>
+                </div>
+                <span class="badge-st">{{ reco.statusLabel }}</span>
+            </div>
+        {% else %}
+            <p class="text-muted-cnps small mb-0">Aucune recommandation à contrôler.</p>
+        {% endfor %}
+    </div>
+
+    <div class="cnps-card">
+        <h6 class="fw-bold mb-3">Recommandations clôturées</h6>
+        {% for reco in closed %}
+            <div class="reco-line">
+                <div>
+                    <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="fw-semibold text-decoration-none">{{ reco.label }}</a>
+                    <div class="text-muted-cnps" style="font-size: 11px;">{{ reco.reference }}</div>
+                </div>
+                <span class="badge-st badge-closed">{{ reco.statusLabel }}</span>
+            </div>
+        {% else %}
+            <p class="text-muted-cnps small mb-0">Aucune recommandation clôturée.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

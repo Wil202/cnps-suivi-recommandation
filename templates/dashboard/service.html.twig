@@ -1,0 +1,132 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon tableau de bord — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .role-banner { background: linear-gradient(135deg, #1F4E79, #163958); color: white; border-radius: 10px; padding: 22px 26px; margin-bottom: 22px; }
+    .role-banner h2 { font-size: 19px; font-weight: 700; margin: 0; }
+    .role-banner p { font-size: 13px; opacity: 0.85; margin: 4px 0 0; }
+    .mini-kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+    .mini-kpi-card { background: white; border: 1px solid var(--cnps-border); border-radius: 10px; padding: 16px 18px; border-left: 4px solid var(--cnps-primary); }
+    .mini-kpi-card.urgent { border-left-color: #DC2626; }
+    .mini-kpi-card.action { border-left-color: #F59E0B; }
+    .mini-kpi-value { font-size: 28px; font-weight: 800; color: var(--cnps-text); }
+    .mini-kpi-label { font-size: 11px; color: var(--cnps-text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+    .reco-action { background: white; border: 1px solid var(--cnps-border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+    .reco-action.urgent { border-left: 4px solid #DC2626; }
+    .reco-action.action { border-left: 4px solid #F59E0B; }
+    .reco-meta { font-size: 11px; color: var(--cnps-text-muted); margin-top: 3px; }
+    .quick-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .badge-st { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+    .badge-S2 { background: #DBEAFE; color: #1E40AF; }
+    .badge-S4 { background: #FED7AA; color: #9A3412; }
+    .badge-S3 { background: #FEF3C7; color: #92400E; }
+    .section-empty { padding: 30px; text-align: center; color: var(--cnps-text-muted); font-size: 13px; }
+    .section-empty i { font-size: 32px; color: #CBD5E1; display: block; margin-bottom: 8px; }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="role-banner">
+        <h2><i class="bi bi-diagram-3"></i> Chef de service</h2>
+        <p>{{ structure ? structure.label : '' }} — {{ user.fullName }}</p>
+    </div>
+
+    {# COMPTEURS #}
+    <div class="mini-kpi">
+        <div class="mini-kpi-card action">
+            <div class="mini-kpi-value">{{ to_assign|length }}</div>
+            <div class="mini-kpi-label">À affecter à un agent</div>
+        </div>
+        <div class="mini-kpi-card urgent">
+            <div class="mini-kpi-value">{{ to_validate|length }}</div>
+            <div class="mini-kpi-label">À valider (soumises)</div>
+        </div>
+        <div class="mini-kpi-card">
+            <div class="mini-kpi-value">{{ in_progress|length }}</div>
+            <div class="mini-kpi-label">En cours par les agents</div>
+        </div>
+    </div>
+
+    {# SECTION 1 — Recos à affecter à un agent (S2) #}
+    <div class="cnps-card mb-3">
+        <h6 class="fw-bold mb-1">
+            <i class="bi bi-person-plus text-warning"></i> À affecter à un agent
+        </h6>
+        <p class="text-muted-cnps small mb-3">Recommandations affectées à votre service, à transmettre à un agent pour exécution.</p>
+
+        {% for reco in to_assign %}
+            <div class="reco-action action">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="fw-semibold text-decoration-none">{{ reco.label }}</a>
+                        <div class="reco-meta">{{ reco.reference }} · Échéance : {{ reco.dueDate ? reco.dueDate|date('d/m/Y') : 'non définie' }}</div>
+                    </div>
+                    <span class="badge-st badge-S2">{{ reco.statusLabel }}</span>
+                </div>
+                <div class="quick-actions">
+                    <a href="{{ path('app_recommendation_assign_agent', {reference: reco.reference}) }}" class="btn btn-sm btn-cnps"> Désigner un agent
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="section-empty">
+                <i class="bi bi-check2-circle"></i>
+                Aucune recommandation à affecter pour le moment.
+            </div>
+        {% endfor %}
+    </div>
+
+    {# SECTION 2 — Recos à valider (S4) #}
+    <div class="cnps-card mb-3">
+        <h6 class="fw-bold mb-1">
+            <i class="bi bi-check2-square text-danger"></i> À valider (travaux soumis par les agents)
+        </h6>
+        <p class="text-muted-cnps small mb-3">Examiner les actions de l'agent : valider pour transmettre au chef de structure, ou renvoyer pour correction.</p>
+
+        {% for reco in to_validate %}
+            <div class="reco-action urgent">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="fw-semibold text-decoration-none">{{ reco.label }}</a>
+                        <div class="reco-meta">{{ reco.reference }} · Échéance : {{ reco.dueDate ? reco.dueDate|date('d/m/Y') : 'non définie' }}</div>
+                    </div>
+                    <span class="badge-st badge-S4">{{ reco.statusLabel }}</span>
+                </div>
+                <div class="quick-actions">
+                    <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="btn btn-sm" style="background: var(--cnps-primary); color: white;">
+                        <i class="bi bi-check-circle"></i> Examiner et décider
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="section-empty">
+                <i class="bi bi-check2-circle"></i>
+                Aucune recommandation soumise pour le moment.
+            </div>
+        {% endfor %}
+    </div>
+
+    {# SECTION 3 — Recos en cours par les agents (S3) #}
+    <div class="cnps-card">
+        <h6 class="fw-bold mb-1"><i class="bi bi-arrow-clockwise"></i> En cours par les agents</h6>
+        <p class="text-muted-cnps small mb-3">Recommandations actuellement traitées par les agents de votre service.</p>
+
+        {% for reco in in_progress %}
+            <div class="reco-action">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="fw-semibold text-decoration-none">{{ reco.label }}</a>
+                        <div class="reco-meta">{{ reco.reference }} · {{ reco.statusLabel }}</div>
+                    </div>
+                    <span class="badge-st badge-S3">{{ reco.statusLabel }}</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="section-empty">
+                <i class="bi bi-inbox"></i>
+                Aucune recommandation en cours.
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

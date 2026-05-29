@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Department index{% endblock %}
+
+{% block body %}
+    <h1>Department index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Code</th>
+                <th>Label</th>
+                <th>Active</th>
+                <th>CreatedAt</th>
+                <th>UpdatedAt</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for department in departments %}
+            <tr>
+                <td>{{ department.id }}</td>
+                <td>{{ department.code }}</td>
+                <td>{{ department.label }}</td>
+                <td>{{ department.active ? 'Yes' : 'No' }}</td>
+                <td>{{ department.createdAt ? department.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ department.updatedAt ? department.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_department_show', {'id': department.id}) }}">show</a>
+                    <a href="{{ path('app_department_edit', {'id': department.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="7">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_department_new') }}">Create new</a>
+{% endblock %}

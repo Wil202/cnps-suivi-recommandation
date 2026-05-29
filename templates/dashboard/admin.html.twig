@@ -1,0 +1,192 @@
+{% extends 'base.html.twig' %}
+{% block title %}Tableau de bord stratégique — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 22px; font-weight: 700; color: var(--cnps-text); margin: 0; }
+    .page-header p { font-size: 13px; color: var(--cnps-text-muted); margin: 4px 0 0; }
+
+    /* Grands KPI riches */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .kpi-card {
+        background: white; border: 1px solid var(--cnps-border); border-radius: 12px;
+        padding: 20px 22px; position: relative; overflow: hidden;
+    }
+    .kpi-card .label { font-size: 11px; font-weight: 600; color: var(--cnps-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-card .value { font-size: 32px; font-weight: 800; color: var(--cnps-text); margin-top: 8px; line-height: 1; }
+    .kpi-card .icon {
+        position: absolute; top: 18px; right: 18px;
+        width: 38px; height: 38px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px;
+    }
+    .kpi-total .icon { background: #EAF1F8; color: var(--cnps-primary); }
+    .kpi-progress .icon { background: #FEF3C7; color: #92400E; }
+    .kpi-overdue .icon { background: #FEE2E2; color: #991B1B; }
+    .kpi-closed .icon { background: #DCFCE7; color: #15803D; }
+    .kpi-card.overdue .value { color: #991B1B; }
+    .kpi-card.closed .value { color: #15803D; }
+    .kpi-card .sublabel { font-size: 11px; color: var(--cnps-text-muted); margin-top: 6px; }
+
+    /* Graphique répartition par statut */
+    .chart-card { background: white; border: 1px solid var(--cnps-border); border-radius: 12px; padding: 22px; }
+    .chart-card h6 { font-weight: 700; margin-bottom: 16px; }
+    .bar-chart { display: flex; align-items: flex-end; gap: 10px; height: 200px; padding: 10px 0 30px; border-bottom: 1px solid var(--cnps-border); position: relative; }
+    .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+    .bar { width: 100%; max-width: 38px; background: linear-gradient(180deg, var(--cnps-primary), #2E75B6); border-radius: 4px 4px 0 0; min-height: 3px; position: relative; }
+    .bar-value { font-size: 11px; font-weight: 700; color: var(--cnps-primary); margin-bottom: 4px; }
+    .bar-label { font-size: 10px; color: var(--cnps-text-muted); margin-top: 6px; text-align: center; font-weight: 500; }
+
+    /* Activité récente */
+    .activity-card { background: white; border: 1px solid var(--cnps-border); border-radius: 12px; padding: 22px; }
+    .activity-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F1F5F9; }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cnps-teal); margin-top: 7px; flex-shrink: 0; }
+    .activity-content { flex: 1; }
+    .activity-title { font-size: 13px; font-weight: 600; color: var(--cnps-text); }
+    .activity-meta { font-size: 11px; color: var(--cnps-text-muted); margin-top: 2px; }
+
+    /* Recos à risque */
+    .risk-card { background: white; border: 1px solid var(--cnps-border); border-radius: 12px; padding: 22px; margin-top: 24px; }
+    .risk-card h6 { font-weight: 700; margin-bottom: 4px; }
+    .risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+    .risk-item {
+        background: white; border: 1px solid var(--cnps-border); border-left: 4px solid #DC2626;
+        border-radius: 8px; padding: 14px 16px;
+    }
+    .risk-item.upcoming { border-left-color: #F59E0B; }
+    .risk-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #FEE2E2; color: #991B1B; margin-bottom: 6px; }
+    .risk-tag.upcoming { background: #FEF3C7; color: #92400E; }
+    .risk-title { font-weight: 600; font-size: 13px; color: var(--cnps-text); }
+    .risk-meta { font-size: 11px; color: var(--cnps-text-muted); margin-top: 4px; }
+
+    .empty-mini { text-align: center; padding: 20px; color: var(--cnps-text-muted); font-size: 13px; }
+    .empty-mini i { font-size: 24px; color: #CBD5E1; display: block; margin-bottom: 6px; }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <h1>Tableau de bord stratégique</h1>
+        <p>Aperçu consolidé des performances et du suivi institutionnel.</p>
+    </div>
+
+    {# 4 GRANDS KPI #}
+    <div class="kpi-grid">
+        <div class="kpi-card kpi-total">
+            <div class="icon"><i class="bi bi-clipboard-data"></i></div>
+            <div class="label">Total</div>
+            <div class="value">{{ total_recos }}</div>
+            <div class="sublabel">recommandations enregistrées</div>
+        </div>
+        <div class="kpi-card kpi-progress">
+            <div class="icon"><i class="bi bi-arrow-clockwise"></i></div>
+            <div class="label">En cours</div>
+            <div class="value">{{ in_progress_count }}</div>
+            <div class="sublabel">en traitement actif</div>
+        </div>
+        <div class="kpi-card kpi-overdue overdue">
+            <div class="icon"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="label">En retard</div>
+            <div class="value">{{ overdue_count }}</div>
+            <div class="sublabel">attention requise</div>
+        </div>
+        <div class="kpi-card kpi-closed closed">
+            <div class="icon"><i class="bi bi-check-circle"></i></div>
+            <div class="label">Clôturées</div>
+            <div class="value">{{ closed_count }}</div>
+            <div class="sublabel">cycle complété</div>
+        </div>
+    </div>
+
+    {# GRAPHIQUE + ACTIVITÉ RÉCENTE #}
+    <div class="row g-3">
+        <div class="col-md-8">
+            <div class="chart-card">
+                <h6>Répartition par statut (S0 → S10)</h6>
+                {% set maxCount = 1 %}
+                {% for code, label in statuses %}
+                    {% if (counts[code] ?? 0) > maxCount %}{% set maxCount = counts[code] %}{% endif %}
+                {% endfor %}
+                <div class="bar-chart">
+                    {% for code, label in statuses %}
+                        {% set c = counts[code] ?? 0 %}
+                        {% set h = c > 0 ? (c / maxCount * 100)|round : 2 %}
+                        <div class="bar-item">
+                            <div class="bar-value">{{ c }}</div>
+                            <div class="bar" style="height: {{ h }}%;"></div>
+                            <div class="bar-label">{{ code }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="activity-card">
+                <h6 class="fw-bold mb-3">Activité récente</h6>
+                {% for reco in recent %}
+                    <div class="activity-item">
+                        <span class="activity-dot"></span>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ reco.label|slice(0, 60) }}{{ reco.label|length > 60 ? '…' : '' }}</div>
+                            <div class="activity-meta">{{ reco.reference }} · {{ reco.statusLabel }} · {{ reco.createdAt|date('d/m/Y') }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-mini">
+                        <i class="bi bi-inbox"></i>
+                        Aucune activité récente.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# RECOS À RISQUE #}
+    <div class="risk-card">
+        <h6><i class="bi bi-exclamation-triangle text-danger"></i> Recommandations à risque</h6>
+        <p class="text-muted-cnps small mb-0">Attention immédiate requise pour éviter les dépassements d'échéance.</p>
+
+        <div class="risk-grid">
+            {# Colonne 1 : URGENT (en retard) #}
+            <div>
+                <p class="fw-bold small mb-2" style="color: #991B1B;">EN RETARD</p>
+                {% for reco in overdue_recos %}
+                    <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="text-decoration-none">
+                        <div class="risk-item">
+                            <span class="risk-tag">URGENT</span>
+                            <div class="risk-title">{{ reco.label }}</div>
+                            <div class="risk-meta">{{ reco.reference }} · Échéance dépassée : {{ reco.dueDate|date('d/m/Y') }}</div>
+                        </div>
+                    </a>
+                {% else %}
+                    <div class="empty-mini">
+                        <i class="bi bi-check2-circle"></i>
+                        Aucune recommandation en retard.
+                    </div>
+                {% endfor %}
+            </div>
+
+            {# Colonne 2 : BIENTÔT (échéance proche) #}
+            <div>
+                <p class="fw-bold small mb-2" style="color: #92400E;">ÉCHÉANCE PROCHE</p>
+                {% for reco in upcoming_recos %}
+                    <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="text-decoration-none">
+                        <div class="risk-item upcoming">
+                            <span class="risk-tag upcoming">BIENTÔT</span>
+                            <div class="risk-title">{{ reco.label }}</div>
+                            <div class="risk-meta">{{ reco.reference }} · Échéance : {{ reco.dueDate|date('d/m/Y') }}</div>
+                        </div>
+                    </a>
+                {% else %}
+                    <div class="empty-mini">
+                        <i class="bi bi-calendar-check"></i>
+                        Aucune échéance proche.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

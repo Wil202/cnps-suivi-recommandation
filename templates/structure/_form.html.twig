@@ -1,0 +1,47 @@
+{{ form_start(form) }}
+    <div class="mb-3">
+        {{ form_label(form.code, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.code, {attr: {class: 'form-control'}}) }}
+        {% if form.code.vars.help %}
+            <small class="text-muted-cnps">{{ form.code.vars.help }}</small>
+        {% endif %}
+        <div class="text-danger small mt-1">{{ form_errors(form.code) }}</div>
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.label, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.label, {attr: {class: 'form-control'}}) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.label) }}</div>
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.type, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.type, {attr: {class: 'form-select'}}) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.type) }}</div>
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.chiefEmail, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.chiefEmail, {attr: {class: 'form-control'}}) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.chiefEmail) }}</div>
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.description, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.description, {attr: {class: 'form-control'}}) }}
+    </div>
+
+    <div class="mb-4">
+        <div class="form-check">
+            {{ form_widget(form.active, {attr: {class: 'form-check-input'}}) }}
+            {{ form_label(form.active, null, {label_attr: {class: 'form-check-label'}}) }}
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-cnps">
+            <i class="bi bi-check-lg"></i> {{ button_label|default('Enregistrer') }}
+        </button>
+        <a href="{{ path('app_structure_index') }}" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+{{ form_end(form) }}

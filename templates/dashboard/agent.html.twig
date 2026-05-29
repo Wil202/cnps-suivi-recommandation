@@ -1,0 +1,163 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon tableau de bord — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .role-banner { background: linear-gradient(135deg, #1F4E79, #163958); color: white; border-radius: 10px; padding: 22px 26px; margin-bottom: 22px; }
+    .role-banner h2 { font-size: 19px; font-weight: 700; margin: 0; }
+    .role-banner p { font-size: 13px; opacity: 0.85; margin: 4px 0 0; }
+
+    .mini-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .mini-kpi-card { background: white; border: 1px solid var(--cnps-border); border-radius: 10px; padding: 16px 18px; border-left: 4px solid var(--cnps-primary); }
+    .mini-kpi-card.urgent { border-left-color: #DC2626; }
+    .mini-kpi-card.action { border-left-color: #F59E0B; }
+    .mini-kpi-card.done { border-left-color: #15803D; }
+    .mini-kpi-value { font-size: 26px; font-weight: 800; color: var(--cnps-text); }
+    .mini-kpi-label { font-size: 11px; color: var(--cnps-text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+
+    .reco-card {
+        background: white; border: 1px solid var(--cnps-border); border-left: 4px solid var(--cnps-primary);
+        border-radius: 8px; padding: 14px 16px; margin-bottom: 10px;
+    }
+    .reco-card.urgent { border-left-color: #DC2626; background: #FEF2F2; }
+    .reco-card.action { border-left-color: #F59E0B; }
+    .reco-card .label-link { font-weight: 700; color: var(--cnps-text); text-decoration: none; font-size: 14px; }
+    .reco-card .label-link:hover { color: var(--cnps-primary); }
+    .reco-meta { font-size: 11px; color: var(--cnps-text-muted); margin-top: 3px; }
+    .quick-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .badge-st { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #F1F5F9; color: #475569; }
+
+    .alert-returned { background: #FEE2E2; color: #991B1B; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-top: 8px; }
+    .alert-returned i { margin-right: 4px; }
+
+    .section-empty { padding: 30px; text-align: center; color: var(--cnps-text-muted); font-size: 13px; }
+    .section-empty i { font-size: 32px; color: #CBD5E1; display: block; margin-bottom: 8px; }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="role-banner">
+        <h2><i class="bi bi-person-workspace"></i> Espace agent</h2>
+        <p>{{ user.fullName }} — Mes recommandations affectées</p>
+    </div>
+
+    {# COMPTEURS #}
+    <div class="mini-kpi">
+        <div class="mini-kpi-card action">
+            <div class="mini-kpi-value">{{ to_start|length }}</div>
+            <div class="mini-kpi-label">À traiter</div>
+        </div>
+        <div class="mini-kpi-card urgent">
+            <div class="mini-kpi-value">{{ returned|length }}</div>
+            <div class="mini-kpi-label">Renvoyées</div>
+        </div>
+        <div class="mini-kpi-card">
+            <div class="mini-kpi-value">{{ submitted|length }}</div>
+            <div class="mini-kpi-label">En attente validation</div>
+        </div>
+        <div class="mini-kpi-card done">
+            <div class="mini-kpi-value">{{ validated|length }}</div>
+            <div class="mini-kpi-label">Validées</div>
+        </div>
+    </div>
+
+    {# SECTION 1 — Renvoyées (priorité urgente) #}
+    {% if returned is not empty %}
+        <div class="cnps-card mb-3">
+            <h6 class="fw-bold mb-1" style="color: #991B1B;">
+                <i class="bi bi-arrow-counterclockwise"></i> Recommandations renvoyées (à reprendre)
+            </h6>
+            <p class="text-muted-cnps small mb-3">Le chef de service ou le chef de structure a renvoyé ces recommandations pour correction.</p>
+
+            {% for reco in returned %}
+                <div class="reco-card urgent">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="label-link">{{ reco.label }}</a>
+                            <div class="reco-meta">{{ reco.reference }} · Échéance : {{ reco.dueDate ? reco.dueDate|date('d/m/Y') : 'non définie' }}</div>
+                            <div class="alert-returned">
+                                <i class="bi bi-exclamation-triangle"></i> Renvoyée pour correction — consultez les commentaires
+                            </div>
+                        </div>
+                        <span class="badge-st">{{ reco.statusLabel }}</span>
+                    </div>
+                    <div class="quick-actions">
+                        <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="btn btn-sm btn-cnps">
+                            <i class="bi bi-pencil-square"></i> Corriger et resoumettre
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# SECTION 2 — À traiter (S3) #}
+    <div class="cnps-card mb-3">
+        <h6 class="fw-bold mb-1">
+            <i class="bi bi-pencil-square"></i> Mes recommandations à traiter
+        </h6>
+        <p class="text-muted-cnps small mb-3">Recommandations qui vous ont été affectées par votre chef de service. Saisissez les actions menées puis soumettez pour validation.</p>
+
+        {% for reco in to_start %}
+            <div class="reco-card action">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="label-link">{{ reco.label }}</a>
+                        <div class="reco-meta">{{ reco.reference }} · Échéance : {{ reco.dueDate ? reco.dueDate|date('d/m/Y') : 'non définie' }}</div>
+                    </div>
+                    <span class="badge-st">{{ reco.statusLabel }}</span>
+                </div>
+                <div class="quick-actions">
+                    <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="btn btn-sm btn-cnps">
+                        <i class="bi bi-pencil"></i> Saisir des actions
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="section-empty">
+                <i class="bi bi-check2-circle"></i>
+                Aucune recommandation à traiter pour le moment.
+            </div>
+        {% endfor %}
+    </div>
+
+    {# SECTION 3 — Soumises (S4) #}
+    {% if submitted is not empty %}
+        <div class="cnps-card mb-3">
+            <h6 class="fw-bold mb-1"><i class="bi bi-hourglass-split"></i> En attente de validation</h6>
+            <p class="text-muted-cnps small mb-3">Recommandations que vous avez soumises, en attente d'examen par le chef de service.</p>
+
+            {% for reco in submitted %}
+                <div class="reco-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="label-link">{{ reco.label }}</a>
+                            <div class="reco-meta">{{ reco.reference }}</div>
+                        </div>
+                        <span class="badge-st">{{ reco.statusLabel }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# SECTION 4 — Validées/Clôturées (historique) #}
+    {% if validated is not empty %}
+        <div class="cnps-card">
+            <h6 class="fw-bold mb-1"><i class="bi bi-check2-all"></i> Mes recommandations validées</h6>
+            <p class="text-muted-cnps small mb-3">Travaux validés par la hiérarchie.</p>
+
+            {% for reco in validated %}
+                <div class="reco-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="label-link">{{ reco.label }}</a>
+                            <div class="reco-meta">{{ reco.reference }} · {{ reco.statusLabel }}</div>
+                        </div>
+                        <span class="badge-st">{{ reco.statusLabel }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

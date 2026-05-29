@@ -1,0 +1,241 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ recommendation.reference }} — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .detail-header {
+        background: white; border: 1px solid var(--cnps-border);
+        border-radius: 10px; padding: 24px; margin-bottom: 20px;
+    }
+    .reco-ref {
+        font-family: 'Courier New', monospace; font-size: 12px;
+        background: #F1F5F9; padding: 3px 9px; border-radius: 5px;
+        color: var(--cnps-primary); font-weight: 600;
+    }
+    .status-badge {
+        font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 12px;
+    }
+    .st-S0 { background: #F1F5F9; color: #475569; }
+    .st-S1 { background: #E0E7FF; color: #3730A3; }
+    .st-S2 { background: #DBEAFE; color: #1E40AF; }
+    .st-S3 { background: #FEF3C7; color: #92400E; }
+    .st-S4 { background: #FED7AA; color: #9A3412; }
+    .st-S5 { background: #CFFAFE; color: #155E75; }
+    .st-S6 { background: #FECACA; color: #991B1B; }
+    .st-S7 { background: #DCFCE7; color: #15803D; }
+    .st-S8 { background: #FDE68A; color: #92400E; }
+    .st-S9 { background: #D1FAE5; color: #065F46; }
+    .st-S10 { background: #FEE2E2; color: #991B1B; }
+
+    /* Timeline du workflow */
+    .timeline { list-style: none; padding: 0; margin: 0; }
+    .timeline-item {
+        display: flex; gap: 14px; padding-bottom: 18px; position: relative;
+    }
+    .timeline-item:not(:last-child)::before {
+        content: ''; position: absolute; left: 13px; top: 28px; bottom: 0;
+        width: 2px; background: var(--cnps-border);
+    }
+    .timeline-dot {
+        width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 700; z-index: 1;
+    }
+    .timeline-dot.done { background: var(--cnps-teal); color: white; }
+    .timeline-dot.current { background: var(--cnps-primary); color: white; box-shadow: 0 0 0 4px rgba(31,78,121,0.15); }
+    .timeline-dot.todo { background: #E2E8F0; color: #94A3B8; }
+    .timeline-content { padding-top: 3px; }
+    .timeline-status { font-weight: 600; font-size: 13px; color: var(--cnps-text); }
+    .timeline-label { font-size: 12px; color: var(--cnps-text-muted); }
+
+    .info-row { display: flex; padding: 8px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px; }
+    .info-row .label { width: 140px; color: var(--cnps-text-muted); font-weight: 500; }
+    .info-row .value { flex: 1; color: var(--cnps-text); font-weight: 500; }
+
+    /* Historique des transitions */
+    .history-list { list-style: none; padding: 0; margin: 0; }
+    .history-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F1F5F9; }
+    .history-item:last-child { border-bottom: none; }
+    .history-icon {
+        width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+        background: #EAF1F8; color: var(--cnps-primary);
+        display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .history-transition { font-size: 13px; font-weight: 600; color: var(--cnps-text); }
+    .history-from { color: var(--cnps-text-muted); }
+    .history-to { color: var(--cnps-primary); }
+    .history-meta { font-size: 11px; color: var(--cnps-text-muted); margin-top: 2px; }
+    .history-comment {
+        font-size: 12px; color: #92400E; background: #FEF3C7;
+        padding: 4px 10px; border-radius: 6px; margin-top: 6px; font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="mb-3">
+        <a href="{{ path('app_recommendation_index') }}" class="text-decoration-none text-muted-cnps small">
+            <i class="bi bi-arrow-left"></i> Retour aux recommandations
+        </a>
+    </div>
+
+    <div class="detail-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <span class="reco-ref">{{ recommendation.reference }}</span>
+                <span class="status-badge st-{{ recommendation.status }} ms-2">{{ recommendation.statusLabel }}</span>
+                <h2 class="mt-3 mb-1" style="font-size: 20px; color: var(--cnps-text);">{{ recommendation.label }}</h2>
+            </div>
+            <a href="{{ path('app_recommendation_edit', {id: recommendation.id}) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+        </div>
+        {% if recommendation.description %}
+            <p class="text-muted-cnps mt-3 mb-0">{{ recommendation.description }}</p>
+        {% endif %}
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-7">
+            <div class="cnps-card">
+                <h6 class="fw-bold mb-3">Parcours dans le workflow</h6>
+                <ul class="timeline">
+                    {% set mainPath = ['S0','S1','S2','S3','S4','S5','S7','S9'] %}
+                    {% set current = recommendation.status %}
+                    {% set branchStatuses = {'S6': 'S3', 'S8': 'S4', 'S10': 'S3'} %}
+                    {% set anchor = branchStatuses[current]|default(current) %}
+                    {% set anchorIndex = null %}
+                    {% for s in mainPath %}
+                        {% if s == anchor %}{% set anchorIndex = loop.index0 %}{% endif %}
+                    {% endfor %}
+
+                    {% for code in mainPath %}
+                        {% set idx = loop.index0 %}
+                        {% if code == current %}
+                            {% set state = 'current' %}
+                        {% elseif anchorIndex is not null and idx < anchorIndex %}
+                            {% set state = 'done' %}
+                        {% elseif anchorIndex is not null and idx == anchorIndex and current in branchStatuses|keys %}
+                            {% set state = 'current' %}
+                        {% else %}
+                            {% set state = 'todo' %}
+                        {% endif %}
+                        <li class="timeline-item">
+                            <div class="timeline-dot {{ state }}">
+                                {% if state == 'done' %}<i class="bi bi-check"></i>{% else %}{{ code }}{% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-status">{{ statuses[code] }}</div>
+                                <div class="timeline-label">{{ code }}</div>
+                            </div>
+                        </li>
+                    {% endfor %}
+
+                    {% if current in branchStatuses|keys %}
+                        <li class="timeline-item">
+                            <div class="timeline-dot current" style="background: #DC2626;">
+                                <i class="bi bi-exclamation"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-status" style="color: #DC2626;">{{ statuses[current] }}</div>
+                                <div class="timeline-label">{{ current }} — en attente de reprise</div>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="cnps-card mt-3">
+                <h6 class="fw-bold mb-3">Historique des transitions</h6>
+                {% if history is empty %}
+                    <p class="text-muted-cnps small mb-0">Aucune transition enregistrée pour le moment.</p>
+                {% else %}
+                    <ul class="history-list">
+                        {% for event in history %}
+                            <li class="history-item">
+                                <div class="history-icon"><i class="bi bi-arrow-right-short"></i></div>
+                                <div class="history-content">
+                                    <div class="history-transition">
+                                        {% if event.fromStatus %}
+                                            <span class="history-from">{{ event.fromStatusLabel }}</span>
+                                            <i class="bi bi-arrow-right mx-1"></i>
+                                        {% endif %}
+                                        <span class="history-to">{{ event.toStatusLabel }}</span>
+                                    </div>
+                                    <div class="history-meta">
+                                        {{ event.createdAt|date('d/m/Y à H:i') }}
+                                        {% if event.author %} · par {{ event.author.fullName }}{% endif %}
+                                    </div>
+                                    {% if event.comment %}
+                                        <div class="history-comment">« {{ event.comment }} »</div>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            {% if available_actions is not empty %}
+                <div class="cnps-card mb-3">
+                    <h6 class="fw-bold mb-3">Actions disponibles</h6>
+                    <div class="d-flex flex-column gap-2">
+                        {% for action in available_actions %}
+                            <form method="post" action="{{ path('app_recommendation_transition', {id: recommendation.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('transition' ~ recommendation.id) }}">
+                                <input type="hidden" name="target_status" value="{{ action.target }}">
+                                <button type="submit" class="btn btn-cnps w-100 text-start">
+                                    <i class="bi bi-arrow-right-circle"></i> {{ action.label }}
+                                </button>
+                            </form>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="cnps-card mb-3">
+                    <h6 class="fw-bold mb-2">Actions</h6>
+                    <p class="text-muted-cnps small mb-0">
+                        <i class="bi bi-flag-fill"></i> Cette recommandation a atteint un statut terminal du workflow.
+                    </p>
+                </div>
+            {% endif %}
+
+            <div class="cnps-card">
+                <h6 class="fw-bold mb-3">Informations</h6>
+                <div class="info-row">
+                    <span class="label">Priorité</span>
+                    <span class="value">{{ recommendation.priorityLabel }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Échéance</span>
+                    <span class="value">{{ recommendation.dueDate ? recommendation.dueDate|date('d/m/Y') : 'Non définie' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Séance d'origine</span>
+                    <span class="value">{{ recommendation.meeting ? recommendation.meeting.reference : '—' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Structure affectée</span>
+                    <span class="value">{{ recommendation.assignedStructure ? recommendation.assignedStructure.label : 'Non affectée' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Visibilité externe</span>
+                    <span class="value">
+                        {% if recommendation.publiclyVisible %}
+                            <span class="text-success"><i class="bi bi-eye"></i> Visible (≥ S7)</span>
+                        {% else %}
+                            <span class="text-muted"><i class="bi bi-eye-slash"></i> Interne</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row" style="border-bottom: none;">
+                    <span class="label">Créée le</span>
+                    <span class="value">{{ recommendation.createdAt|date('d/m/Y à H:i') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

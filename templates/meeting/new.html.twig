@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+{% block title %}Nouvelle séance — CNPS{% endblock %}
+{% block body %}
+    <div class="mb-3">
+        <a href="{{ path('app_meeting_index') }}" class="text-decoration-none text-muted-cnps small">
+            <i class="bi bi-arrow-left"></i> Retour aux séances
+        </a>
+    </div>
+    <h1 class="page-title mb-4">Nouvelle séance</h1>
+    <div class="cnps-card" style="max-width: 680px;">
+        {{ include('meeting/_form.html.twig', {button_label: 'Créer la séance'}) }}
+    </div>
+{% endblock %}

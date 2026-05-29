@@ -1,0 +1,153 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon tableau de bord — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .role-banner { background: linear-gradient(135deg, #1F4E79, #163958); color: white; border-radius: 10px; padding: 22px 26px; margin-bottom: 22px; }
+    .role-banner h2 { font-size: 19px; font-weight: 700; margin: 0; }
+    .role-banner p { font-size: 13px; opacity: 0.85; margin: 4px 0 0; }
+
+    .priority-card {
+        background: white; border: 1px solid var(--cnps-border); border-left: 4px solid #DC2626;
+        border-radius: 10px; padding: 18px 22px; margin-bottom: 22px;
+    }
+    .priority-card h6 { color: var(--cnps-text); font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+    .priority-card .count { font-size: 34px; font-weight: 800; color: #DC2626; line-height: 1; }
+    .priority-card .desc { color: var(--cnps-text-muted); font-size: 13px; }
+
+    .mini-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .mini-kpi-card { background: white; border: 1px solid var(--cnps-border); border-radius: 10px; padding: 16px 18px; border-left: 4px solid var(--cnps-primary); }
+    .mini-kpi-value { font-size: 26px; font-weight: 800; color: var(--cnps-text); }
+    .mini-kpi-label { font-size: 11px; color: var(--cnps-text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+
+    .reco-action { background: white; border: 1px solid var(--cnps-border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+    .reco-action.priority { border-left: 4px solid #DC2626; }
+    .reco-action.info { border-left: 4px solid var(--cnps-primary); }
+    .reco-meta { font-size: 11px; color: var(--cnps-text-muted); margin-top: 3px; }
+    .quick-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+    .status-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; }
+    .status-bar-label { width: 100px; color: var(--cnps-text); font-weight: 500; }
+    .status-bar-track { flex: 1; height: 14px; background: #F1F5F9; border-radius: 7px; overflow: hidden; }
+    .status-bar-fill { height: 100%; background: var(--cnps-primary); border-radius: 7px; }
+    .status-bar-count { width: 32px; text-align: right; font-weight: 700; color: var(--cnps-primary); font-size: 12px; }
+
+    .badge-st { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #F1F5F9; color: #475569; }
+    .section-empty { padding: 30px; text-align: center; color: var(--cnps-text-muted); font-size: 13px; }
+    .section-empty i { font-size: 32px; color: #CBD5E1; display: block; margin-bottom: 8px; }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="role-banner">
+        <h2><i class="bi bi-clipboard2-check"></i> Coordonnateur Comité des projets</h2>
+        <p>{{ user.fullName }} — Validation initiale et pilotage du suivi</p>
+    </div>
+
+    {% if to_validate is not empty %}
+        <div class="priority-card">
+            <h6><i class="bi bi-exclamation-circle"></i> Action requise</h6>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="count">{{ to_validate|length }}</div>
+                    <div class="desc">recommandation{{ to_validate|length > 1 ? 's' : '' }} en attente de votre validation initiale (S0 → S1)</div>
+                </div>
+                <a href="#priority-section" class="btn btn-cnps">
+                    <i class="bi bi-arrow-down"></i> Examiner maintenant
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="mini-kpi">
+        <div class="mini-kpi-card">
+            <div class="mini-kpi-value">{{ total_recos }}</div>
+            <div class="mini-kpi-label">Recos au total</div>
+        </div>
+        <div class="mini-kpi-card">
+            <div class="mini-kpi-value">{{ counts['S3'] ?? 0 }}</div>
+            <div class="mini-kpi-label">En cours de traitement</div>
+        </div>
+        <div class="mini-kpi-card">
+            <div class="mini-kpi-value">{{ to_follow_up|length }}</div>
+            <div class="mini-kpi-label">Approuvées à suivre</div>
+        </div>
+        <div class="mini-kpi-card">
+            <div class="mini-kpi-value">{{ counts['S9'] ?? 0 }}</div>
+            <div class="mini-kpi-label">Clôturées</div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-7">
+            <div class="cnps-card" id="priority-section">
+                <h6 class="fw-bold mb-1"><i class="bi bi-shield-check"></i> Recommandations à valider (S0 → S1)</h6>
+                <p class="text-muted-cnps small mb-3">Recommandations saisies par les secrétaires de séance, à valider pour activer le circuit d'exécution.</p>
+
+                {% for reco in to_validate %}
+                    <div class="reco-action priority">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="fw-semibold text-decoration-none">{{ reco.label }}</a>
+                                <div class="reco-meta">{{ reco.reference }} · Saisie le {{ reco.createdAt|date('d/m/Y') }}</div>
+                            </div>
+                            <span class="badge-st">{{ reco.statusLabel }}</span>
+                        </div>
+                        <div class="quick-actions">
+                            <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="btn btn-sm btn-cnps">
+                                <i class="bi bi-check-circle"></i> Examiner et valider
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="section-empty">
+                        <i class="bi bi-check2-circle"></i>
+                        Aucune recommandation en attente de validation.
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="cnps-card mt-3">
+                <h6 class="fw-bold mb-1"><i class="bi bi-eye"></i> Recommandations approuvées à suivre</h6>
+                <p class="text-muted-cnps small mb-3">Visibles inter-structures, en cours de contrôle par la structure de suivi.</p>
+
+                {% for reco in to_follow_up %}
+                    <div class="reco-action info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="fw-semibold text-decoration-none">{{ reco.label }}</a>
+                                <div class="reco-meta">{{ reco.reference }} · Échéance : {{ reco.dueDate ? reco.dueDate|date('d/m/Y') : 'non définie' }}</div>
+                            </div>
+                            <span class="badge-st">{{ reco.statusLabel }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="section-empty">
+                        <i class="bi bi-inbox"></i>
+                        Aucune recommandation approuvée en cours de suivi.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="cnps-card">
+                <h6 class="fw-bold mb-3">Répartition par statut</h6>
+                {% set maxCount = 1 %}
+                {% for code, label in statuses %}
+                    {% if (counts[code] ?? 0) > maxCount %}{% set maxCount = counts[code] %}{% endif %}
+                {% endfor %}
+                {% for code, label in statuses %}
+                    {% set c = counts[code] ?? 0 %}
+                    <div class="status-bar-row">
+                        <span class="status-bar-label">{{ label }}</span>
+                        <span class="status-bar-track">
+                            <span class="status-bar-fill" style="width: {{ c > 0 ? (c / maxCount * 100)|round : 0 }}%;"></span>
+                        </span>
+                        <span class="status-bar-count">{{ c }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

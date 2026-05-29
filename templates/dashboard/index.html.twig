@@ -1,0 +1,320 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord — CNPS{% endblock %}
+
+{% block body %}
+    {# ============ EN-TÊTE ============ #}
+    <div class="mb-4">
+        <h1 class="page-title">Tableau de bord stratégique</h1>
+        <p class="page-subtitle">Aperçu consolidé des performances et du suivi institutionnel.</p>
+    </div>
+
+    {# ============ KPI CARDS ============ #}
+    <div class="row g-3 mb-4">
+        {# TOTAL #}
+        <div class="col-md-3">
+            <div class="cnps-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="label-uppercase">TOTAL</span>
+                    <i class="bi bi-bar-chart-fill text-muted-cnps"></i>
+                </div>
+                <div class="display-5 fw-bold text-cnps" style="font-size: 36px; line-height: 1;">
+                    {{ stats.total|number_format(0, ',', ',') }}
+                </div>
+                <div class="mt-2">
+                    <span class="badge" style="background:#DCFCE7; color:#15803D; font-weight:600; padding:4px 8px; border-radius:6px;">
+                        {{ stats.total_trend }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {# EN COURS #}
+        <div class="col-md-3">
+            <div class="cnps-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="label-uppercase">EN COURS</span>
+                    <i class="bi bi-calendar-event" style="color: var(--cnps-teal);"></i>
+                </div>
+                <div class="display-5 fw-bold text-cnps" style="font-size: 36px; line-height: 1;">
+                    {{ stats.in_progress }}
+                </div>
+                <div class="mt-2">
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar" style="width: {{ (stats.in_progress / stats.total * 100)|round }}%; background: var(--cnps-primary);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# EN RETARD #}
+        <div class="col-md-3">
+            <div class="cnps-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="label-uppercase">EN RETARD</span>
+                    <i class="bi bi-exclamation-triangle-fill" style="color: #DC2626;"></i>
+                </div>
+                <div class="display-5 fw-bold" style="color: #DC2626; font-size: 36px; line-height: 1;">
+                    {{ stats.overdue }}
+                </div>
+                <small class="text-muted-cnps d-block mt-2">{{ stats.overdue_alert }}</small>
+            </div>
+        </div>
+
+        {# CLÔTURÉES #}
+        <div class="col-md-3">
+            <div class="cnps-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="label-uppercase">CLÔTURÉES</span>
+                    <i class="bi bi-check-circle-fill text-teal"></i>
+                </div>
+                <div class="display-5 fw-bold text-cnps" style="font-size: 36px; line-height: 1;">
+                    {{ stats.closed }}
+                </div>
+                <small class="text-teal d-block mt-2 fw-semibold">{{ stats.closed_pct }}</small>
+            </div>
+        </div>
+    </div>
+
+    {# ============ CHART + ACTIVITY ============ #}
+    <div class="row g-3 mb-4">
+        {# RÉPARTITION PAR STATUT #}
+        <div class="col-md-8">
+            <div class="cnps-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-0 fw-bold">Répartition par statut (S0-S10)</h5>
+                    </div>
+                    <a href="#" class="text-muted-cnps text-decoration-none small">
+                        Détails <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div style="height: 280px; position: relative;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="d-flex justify-content-center gap-4 mt-3">
+                    <span class="small d-flex align-items-center gap-2">
+                        <span style="width:10px; height:10px; border-radius:50%; background:#1F4E79; display:inline-block;"></span>
+                        Audit Initial
+                    </span>
+                    <span class="small d-flex align-items-center gap-2">
+                        <span style="width:10px; height:10px; border-radius:50%; background:#5EEAD4; display:inline-block;"></span>
+                        Validation Chef
+                    </span>
+                    <span class="small d-flex align-items-center gap-2">
+                        <span style="width:10px; height:10px; border-radius:50%; background:#14B8A6; display:inline-block;"></span>
+                        Finalisé
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {# ACTIVITÉ RÉCENTE #}
+        <div class="col-md-4">
+            <div class="cnps-card h-100">
+                <h5 class="mb-3 fw-bold">Activité Récente</h5>
+                <div class="d-flex flex-column gap-3">
+                    {% for item in recentActivity %}
+                        <div class="d-flex gap-3">
+                            <div class="flex-shrink-0">
+                                <div style="width:34px; height:34px; border-radius:50%; background: 
+                                    {% if item.color == 'primary' %}#DBEAFE; color:#1E40AF
+                                    {% elseif item.color == 'success' %}#DCFCE7; color:#15803D
+                                    {% elseif item.color == 'warning' %}#FEF3C7; color:#92400E
+                                    {% else %}#E0E7FF; color:#4338CA{% endif %};
+                                    display:flex; align-items:center; justify-content:center;">
+                                    <i class="bi {{ item.icon }}"></i>
+                                </div>
+                            </div>
+                            <div class="min-width-0">
+                                <div class="fw-semibold small">{{ item.title }}</div>
+                                <small class="text-muted-cnps">{{ item.meta }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ============ RECOS À RISQUE + ANALYSE STAT ============ #}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-1 fw-bold">Recommandations à Risque</h4>
+            <p class="text-muted-cnps small mb-0">Attention immédiate requise pour éviter les dépassements d'échéance.</p>
+        </div>
+        <a href="#" class="btn btn-outline-secondary btn-sm">Voir Tout</a>
+    </div>
+
+    <div class="row g-3">
+        {% for reco in atRisk %}
+            <div class="col-md-4">
+                <div class="cnps-card h-100 position-relative overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge fw-bold" style="background: {{ reco.urgency_color }}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 10px; letter-spacing: 0.5px;">
+                            {{ reco.urgency }}
+                        </span>
+                        <small class="text-muted-cnps">{{ reco.ref }}</small>
+                    </div>
+                    <h6 class="fw-bold mb-3" style="line-height:1.4; min-height: 44px;">{{ reco.title }}</h6>
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        <small class="d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar-x" style="color: {{ reco.deadline_color }};"></i>
+                            <span><strong>Échéance:</strong> <span style="color: {{ reco.deadline_color }};">{{ reco.deadline }}</span></span>
+                        </small>
+                        <small class="d-flex align-items-center gap-2">
+                            <i class="bi bi-person text-muted-cnps"></i>
+                            <span><strong>Responsable:</strong> {{ reco.owner }}</span>
+                        </small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                        <div class="d-flex gap-1">
+                            <div style="width:24px; height:24px; border-radius:50%; background:#94A3B8; border:2px solid white;"></div>
+                            <div style="width:24px; height:24px; border-radius:50%; background:#64748B; border:2px solid white; margin-left:-8px;"></div>
+                        </div>
+                        <button class="btn btn-sm fw-bold" style="background: {{ reco.action_color }}; color: white; font-size: 11px; letter-spacing: 0.5px; padding: 5px 12px;">
+                            {{ reco.action }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        {# ANALYSE STAT #}
+        <div class="col-md-4">
+            <div class="cnps-card h-100" style="background: linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%);">
+                <span class="label-uppercase d-block mb-2" style="color: var(--cnps-teal); font-size: 10px;">ANALYSE STAT</span>
+                <h6 class="fw-bold mb-2" style="line-height:1.4;">Taux de clôture mensuel en baisse sur la région Ouest</h6>
+                <p class="small text-muted-cnps mb-3">
+                    Une baisse de <strong style="color: #DC2626;">14%</strong> de la résolution des recommandations a été détectée. Une session de coordination est recommandée.
+                </p>
+                <div class="d-flex justify-content-between align-items-end">
+                    <div style="position: relative; width: 60px; height: 60px;">
+                        <canvas id="trendDonut"></canvas>
+                    </div>
+                    <button class="btn btn-cnps">
+                        Générer un rapport <i class="bi bi-plus-circle ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        // ============ BAR CHART : Répartition par statut ============
+        const chartData = {{ chartData|json_encode|raw }};
+
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: 'Audit Initial',
+                        data: chartData.auditInitial,
+                        backgroundColor: '#1F4E79',
+                        borderRadius: 4,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8,
+                    },
+                    {
+                        label: 'Validation Chef',
+                        data: chartData.validationChef,
+                        backgroundColor: '#5EEAD4',
+                        borderRadius: 4,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8,
+                    },
+                    {
+                        label: 'Finalisé',
+                        data: chartData.finalise,
+                        backgroundColor: '#14B8A6',
+                        borderRadius: 4,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1E293B',
+                        padding: 10,
+                        cornerRadius: 6,
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748B', font: { size: 11, weight: '600' } }
+                    },
+                    y: {
+                        grid: { color: '#F1F5F9' },
+                        ticks: { color: '#64748B', font: { size: 11 } },
+                        beginAtZero: true,
+                    }
+                }
+            }
+        });
+
+        // ============ MINI DONUT : Tendance ============
+        const donutCtx = document.getElementById('trendDonut').getContext('2d');
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [86, 14],
+                    backgroundColor: ['#14B8A6', '#FEE2E2'],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            }
+        });
+    </script>
+    {# ============ RÉFÉRENTIEL (données réelles BDD) ============ #}
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+        <div>
+            <h4 class="mb-1 fw-bold">Référentiel organisationnel</h4>
+            <p class="text-muted-cnps small mb-0">Données en temps réel depuis la base de données.</p>
+        </div>
+        <span class="badge bg-success"><i class="bi bi-database-check"></i> Connecté à MySQL</span>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="cnps-card d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="label-uppercase">Structures</span>
+                    <div class="display-6 fw-bold text-cnps">{{ realStats.structures }}</div>
+                    <small class="text-success">{{ realStats.structures_active }} active(s)</small>
+                </div>
+                <i class="bi bi-buildings text-cnps" style="font-size: 2.5rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="cnps-card d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="label-uppercase">Services</span>
+                    <div class="display-6 fw-bold text-cnps">{{ realStats.departments }}</div>
+                    <small class="text-success">{{ realStats.departments_active }} actif(s)</small>
+                </div>
+                <i class="bi bi-diagram-3 text-cnps" style="font-size: 2.5rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+{% endblock %}

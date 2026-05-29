@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+{% block title %}Nouvel agent — CNPS{% endblock %}
+{% block body %}
+    <div class="mb-3">
+        <a href="{{ path('app_user_index') }}" class="text-decoration-none text-muted-cnps small">
+            <i class="bi bi-arrow-left"></i> Retour aux agents
+        </a>
+    </div>
+    <h1 class="page-title mb-4">Nouvel agent</h1>
+    <div class="cnps-card" style="max-width: 680px;">
+        {{ include('user/_form.html.twig', {button_label: 'Créer l\'agent'}) }}
+    </div>
+{% endblock %}

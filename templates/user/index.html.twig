@@ -1,0 +1,162 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Agents — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .cnps-table { width: 100%; border-collapse: collapse; }
+    .cnps-table thead th {
+        background: #F1F5F9; text-align: left; padding: 10px 14px;
+        font-size: 11px; font-weight: 600; color: var(--cnps-text-muted);
+        text-transform: uppercase; letter-spacing: 0.4px;
+        border-bottom: 1px solid var(--cnps-border);
+    }
+    .cnps-table tbody td {
+        padding: 12px 14px; font-size: 13px;
+        border-bottom: 1px solid var(--cnps-border); vertical-align: middle;
+    }
+    .cnps-table tbody tr:hover { background: #FAFBFD; }
+
+    .agent-cell { display: flex; align-items: center; gap: 10px; }
+    .agent-avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--cnps-primary), var(--cnps-primary-light));
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 12px; flex-shrink: 0;
+    }
+    .agent-name { font-weight: 600; color: var(--cnps-text); }
+    .agent-email { font-size: 11px; color: var(--cnps-text-muted); }
+
+    .matricule-mono {
+        font-family: 'Courier New', monospace; font-size: 11px;
+        background: #F1F5F9; padding: 2px 7px; border-radius: 4px;
+        color: var(--cnps-text);
+    }
+
+    .role-badge {
+        font-size: 11px; font-weight: 600; padding: 3px 10px;
+        border-radius: 12px;
+    }
+    .role-ROLE_ADMIN { background: #FEE2E2; color: #991B1B; }
+    .role-ROLE_DG { background: #FEF3C7; color: #92400E; }
+    .role-ROLE_COORDINATOR { background: #DDD6FE; color: #5B21B6; }
+    .role-ROLE_CHIEF_STRUCTURE { background: #DBEAFE; color: #1E40AF; }
+    .role-ROLE_CHIEF_SERVICE { background: #CFFAFE; color: #155E75; }
+    .role-ROLE_SECRETARY { background: #FCE7F3; color: #9D174D; }
+    .role-ROLE_FOLLOWUP { background: #D1FAE5; color: #065F46; }
+    .role-ROLE_AGENT { background: #F1F5F9; color: #475569; }
+
+    .auth-badge {
+        font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+    }
+    .auth-local { background: #E0E7FF; color: #3730A3; }
+    .auth-ldap { background: #FEF3C7; color: #92400E; }
+
+    .status-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+    .status-dot .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-active .dot { background: #16A34A; }
+    .status-active { color: #15803D; }
+    .status-inactive .dot { background: #94A3B8; }
+    .status-inactive { color: var(--cnps-text-muted); }
+
+    .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+    .btn-icon {
+        width: 32px; height: 32px; border-radius: 7px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--cnps-border); background: white;
+        color: var(--cnps-text-muted); text-decoration: none; font-size: 14px;
+    }
+    .btn-icon:hover { background: #F1F5F9; color: var(--cnps-primary); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--cnps-text-muted); }
+    .empty-state i { font-size: 56px; color: #CBD5E1; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-title">Agents</h1>
+            <p class="page-subtitle mb-0">Comptes utilisateurs et affectations dans l'organisation CNPS.</p>
+        </div>
+        <a href="{{ path('app_user_new') }}" class="btn btn-cnps">
+            <i class="bi bi-person-plus"></i> Nouvel agent
+        </a>
+    </div>
+
+    <div class="cnps-card p-0">
+        <table class="cnps-table">
+            <thead>
+                <tr>
+                    <th>Agent</th>
+                    <th>Matricule</th>
+                    <th>Rôle</th>
+                    <th>Structure</th>
+                    <th>Service</th>
+                    <th>Auth</th>
+                    <th>Statut</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="agent-cell">
+                                <div class="agent-avatar">{{ user.initials }}</div>
+                                <div>
+                                    <div class="agent-name">{{ user.fullName }}</div>
+                                    <div class="agent-email">{{ user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if user.matricule %}
+                                <span class="matricule-mono">{{ user.matricule }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="role-badge role-{{ user.mainRole }}">{{ user.mainRoleLabel }}</span></td>
+                        <td>{{ user.structure ? user.structure.code : '—' }}</td>
+                        <td>{{ user.department ? user.department.code : '—' }}</td>
+                        <td>
+                            {% if user.ldapUser %}
+                                <span class="auth-badge auth-ldap">AD</span>
+                            {% else %}
+                                <span class="auth-badge auth-local">Local</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.active %}
+                                <span class="status-dot status-active"><span class="dot"></span> Actif</span>
+                            {% else %}
+                                <span class="status-dot status-inactive"><span class="dot"></span> Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="row-actions">
+                                <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn-icon" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div><i class="bi bi-people"></i></div>
+                                <h5>Aucun agent enregistré</h5>
+                                <p>Créez le premier compte utilisateur de l'application.</p>
+                                <a href="{{ path('app_user_new') }}" class="btn btn-cnps mt-2">
+                                    <i class="bi bi-person-plus"></i> Créer un agent
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

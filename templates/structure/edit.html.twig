@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ structure.code }} — CNPS{% endblock %}
+
+{% block body %}
+    <div class="mb-3">
+        <a href="{{ path('app_structure_index') }}" class="text-decoration-none text-muted-cnps small">
+            <i class="bi bi-arrow-left"></i> Retour aux structures
+        </a>
+    </div>
+
+    <h1 class="page-title mb-4">Modifier la structure {{ structure.code }}</h1>
+
+    <div class="cnps-card mb-3" style="max-width: 640px;">
+        {{ include('structure/_form.html.twig', {button_label: 'Enregistrer les modifications'}) }}
+    </div>
+
+    {# Bloc suppression séparé, en zone "danger" #}
+    <div class="cnps-card" style="max-width: 640px; border-color: #FCA5A5;">
+        <h6 class="fw-bold text-danger mb-1">Zone de danger</h6>
+        <p class="text-muted-cnps small mb-3">La suppression d'une structure est définitive.</p>
+        {{ include('structure/_delete_form.html.twig') }}
+    </div>
+{% endblock %}

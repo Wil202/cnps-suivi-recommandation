@@ -1,0 +1,45 @@
+	{{ form_start(form) }}
+    <div class="mb-3">
+        {{ form_label(form.label, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.label, {attr: {class: 'form-control'}}) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.label) }}</div>
+    </div>
+
+    <div class="mb-3">
+        {{ form_label(form.description, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.description, {attr: {class: 'form-control'}}) }}
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            {{ form_label(form.status, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.status, {attr: {class: 'form-select'}}) }}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{ form_label(form.priority, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.priority, {attr: {class: 'form-select'}}) }}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{ form_label(form.dueDate, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.dueDate, {attr: {class: 'form-control'}}) }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.meeting, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.meeting, {attr: {class: 'form-select'}}) }}
+        </div>
+        <div class="col-md-6 mb-4">
+            {{ form_label(form.assignedStructure, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.assignedStructure, {attr: {class: 'form-select'}}) }}
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-cnps">
+            <i class="bi bi-check-lg"></i> {{ button_label|default('Enregistrer') }}
+        </button>
+        <a href="{{ path('app_recommendation_index') }}" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+{{ form_end(form) }}

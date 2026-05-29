@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Structure{% endblock %}
+
+{% block body %}
+    <h1>Structure</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ structure.id }}</td>
+            </tr>
+            <tr>
+                <th>Code</th>
+                <td>{{ structure.code }}</td>
+            </tr>
+            <tr>
+                <th>Label</th>
+                <td>{{ structure.label }}</td>
+            </tr>
+            <tr>
+                <th>Type</th>
+                <td>{{ structure.type }}</td>
+            </tr>
+            <tr>
+                <th>ChiefEmail</th>
+                <td>{{ structure.chiefEmail }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ structure.description }}</td>
+            </tr>
+            <tr>
+                <th>Active</th>
+                <td>{{ structure.active ? 'Yes' : 'No' }}</td>
+            </tr>
+            <tr>
+                <th>CreatedAt</th>
+                <td>{{ structure.createdAt ? structure.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+            <tr>
+                <th>UpdatedAt</th>
+                <td>{{ structure.updatedAt ? structure.updatedAt|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_structure_index') }}">back to list</a>
+
+    <a href="{{ path('app_structure_edit', {'id': structure.id}) }}">edit</a>
+
+    {{ include('structure/_delete_form.html.twig') }}
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recommandations — CNPS{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .reco-table { width: 100%; border-collapse: collapse; }
+    .reco-table thead th {
+        background: #F1F5F9; text-align: left; padding: 10px 14px;
+        font-size: 11px; font-weight: 600; color: var(--cnps-text-muted);
+        text-transform: uppercase; letter-spacing: 0.4px;
+        border-bottom: 1px solid var(--cnps-border);
+    }
+    .reco-table tbody td {
+        padding: 12px 14px; font-size: 13px;
+        border-bottom: 1px solid var(--cnps-border); vertical-align: middle;
+    }
+    .reco-table tbody tr:hover { background: #FAFBFD; }
+
+    .reco-ref {
+        font-family: 'Courier New', monospace; font-size: 11px;
+        background: #F1F5F9; padding: 2px 7px; border-radius: 4px;
+        color: var(--cnps-primary); font-weight: 600;
+    }
+    .reco-label { font-weight: 600; color: var(--cnps-text); }
+
+    /* Badge de statut — couleur selon la phase du workflow */
+    .status-badge {
+        font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 12px;
+        white-space: nowrap;
+    }
+    .st-S0 { background: #F1F5F9; color: #475569; }
+    .st-S1 { background: #E0E7FF; color: #3730A3; }
+    .st-S2 { background: #DBEAFE; color: #1E40AF; }
+    .st-S3 { background: #FEF3C7; color: #92400E; }
+    .st-S4 { background: #FED7AA; color: #9A3412; }
+    .st-S5 { background: #CFFAFE; color: #155E75; }
+    .st-S6 { background: #FECACA; color: #991B1B; }
+    .st-S7 { background: #DCFCE7; color: #15803D; }
+    .st-S8 { background: #FDE68A; color: #92400E; }
+    .st-S9 { background: #D1FAE5; color: #065F46; }
+    .st-S10 { background: #FEE2E2; color: #991B1B; }
+
+    .prio-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+    .prio-high { background: #FEE2E2; color: #991B1B; }
+    .prio-medium { background: #FEF3C7; color: #92400E; }
+    .prio-low { background: #F1F5F9; color: #475569; }
+
+    .btn-icon {
+        width: 32px; height: 32px; border-radius: 7px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--cnps-border); background: white;
+        color: var(--cnps-text-muted); text-decoration: none; font-size: 14px;
+    }
+    .btn-icon:hover { background: #F1F5F9; color: var(--cnps-primary); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--cnps-text-muted); }
+    .empty-state i { font-size: 56px; color: #CBD5E1; }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-title">Recommandations</h1>
+            <p class="page-subtitle mb-0">Suivi des recommandations issues des audits et séances.</p>
+        </div>
+        <a href="{{ path('app_recommendation_new') }}" class="btn btn-cnps">
+            <i class="bi bi-plus-lg"></i> Nouvelle recommandation
+        </a>
+    </div>
+
+    <div class="cnps-card p-0">
+        <table class="reco-table">
+            <thead>
+                <tr>
+                    <th>Référence</th>
+                    <th>Libellé</th>
+                    <th>Statut</th>
+                    <th>Priorité</th>
+                    <th>Structure</th>
+                    <th>Échéance</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reco in recommendations %}
+                    <tr>
+                        <td><span class="reco-ref">{{ reco.reference }}</span></td>
+                        <td>
+                            <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}"
+                               class="reco-label text-decoration-none">
+                                {{ reco.label }}
+                            </a>
+                        </td>
+                        <td><span class="status-badge st-{{ reco.status }}">{{ reco.statusLabel }}</span></td>
+                        <td><span class="prio-badge prio-{{ reco.priority }}">{{ reco.priorityLabel }}</span></td>
+                        <td>{{ reco.assignedStructure ? reco.assignedStructure.code : '—' }}</td>
+                        <td>{{ reco.dueDate ? reco.dueDate|date('d/m/Y') : '—' }}</td>
+                        <td>
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a href="{{ path('app_recommendation_show', {reference: reco.reference}) }}" class="btn-icon" title="Voir">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('app_recommendation_edit', {id: reco.id}) }}" class="btn-icon" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div><i class="bi bi-clipboard-check"></i></div>
+                                <h5>Aucune recommandation</h5>
+                                <p>Créez la première recommandation de suivi.</p>
+                                <a href="{{ path('app_recommendation_new') }}" class="btn btn-cnps mt-2">
+                                    <i class="bi bi-plus-lg"></i> Nouvelle recommandation
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

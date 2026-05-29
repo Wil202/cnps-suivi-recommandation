@@ -1,0 +1,41 @@
+{{ form_start(form) }}
+    <div class="mb-3">
+        {{ form_label(form.title, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.title, {attr: {class: 'form-control'}}) }}
+        <div class="text-danger small mt-1">{{ form_errors(form.title) }}</div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.type, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.type, {attr: {class: 'form-select'}}) }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.status, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.status, {attr: {class: 'form-select'}}) }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.scheduledAt, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.scheduledAt, {attr: {class: 'form-control'}}) }}
+        </div>
+        <div class="col-md-6 mb-3">
+            {{ form_label(form.location, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.location, {attr: {class: 'form-control'}}) }}
+        </div>
+    </div>
+
+    <div class="mb-4">
+        {{ form_label(form.description, null, {label_attr: {class: 'form-label fw-semibold'}}) }}
+        {{ form_widget(form.description, {attr: {class: 'form-control'}}) }}
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-cnps">
+            <i class="bi bi-check-lg"></i> {{ button_label|default('Enregistrer') }}
+        </button>
+        <a href="{{ path('app_meeting_index') }}" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+{{ form_end(form) }}
